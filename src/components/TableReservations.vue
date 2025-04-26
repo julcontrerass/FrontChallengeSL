@@ -1,21 +1,21 @@
 <template>
-  <div class="tabla-box">
-    <table class="tabla-reservas">
+  <div class="table-box">
+    <table class="table-reservations">
       <thead>
         <tr>
           <th>Nombre</th>
-          <th>Horario <i class="ordenar-icon">↑</i></th>
+          <th>Horario <i class="sort-icon">↑</i></th>
           <th>Acción</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in reservas" :key="item.id">
+        <tr v-for="item in reservations" :key="item.id">
           <td>{{ item.content }}</td>
           <td>
-            de {{ formatoHorario(item.start) }} a {{ formatoHorario(item.end) }}
+            de {{ formatSchedule(item.start) }} a {{ formatSchedule(item.end) }}
           </td>
           <td>
-            <button class="eliminar" @click="solicitarEliminar(item.id)">
+            <button class="delete" @click="requestDelete(item.id)">
               <i class="fas fa-trash-alt"></i>
             </button>
           </td>
@@ -28,42 +28,42 @@
 <script>
 /* global moment*/
 export default {
-  name: "TablaReservas",
+  name: "TableReservations",
   props: {
-    reservas: {
+    reservations: {
       type: Array,
       required: true,
     },
   },
-  emits: ["eliminar-reserva"],
+  emits: ["delete-reservation"],
   setup(props, { emit }) {
 
-    function formatoHorario(date) {
+    function formatSchedule(date) {
       return moment(date).locale("es").format("HH:mm");
     }
 
-    function solicitarEliminar(id) {
+    function requestDelete(id) {
       if (confirm("¿Estás seguro de eliminar esta reserva?")) {
-        emit("eliminar-reserva", id);
+        emit("delete-reservation", id);
       }
     }
 
     return {
-      formatoHorario,
-      solicitarEliminar,
+      formatSchedule,
+      requestDelete,
     };
   },
 };
 </script>
 
 <style scoped>
-.tabla-box {
+.table-box {
   width: 100%;
   max-width: 900px;
   margin-top: 30px;
 }
 
-.tabla-reservas {
+.table-reservations {
   width: 100%;
   border-collapse: collapse;
   background: white;
@@ -72,31 +72,31 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.tabla-reservas th,
-.tabla-reservas td {
+.table-reservations th,
+.table-reservations td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #eee;
 }
 
-.tabla-reservas th {
+.table-reservations th {
   background-color: #f8f8f8;
   font-weight: 500;
   color: #444;
   font-size: 14px;
 }
 
-.tabla-reservas tbody tr:hover {
+.table-reservations tbody tr:hover {
   background-color: #f9f9f9;
 }
 
-.ordenar-icon {
+.sort-icon {
   font-size: 19px;
   margin-left: 4px;
   color: #999;
 }
 
-.eliminar {
+.delete {
   background: none;
   border: none;
   cursor: pointer;
@@ -109,7 +109,7 @@ export default {
   justify-content: center;
 }
 
-.eliminar:hover {
+.delete:hover {
   color: #e74c3c;
 }
 </style>

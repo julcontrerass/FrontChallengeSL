@@ -4,15 +4,15 @@
       
       <div class="legend">
           <div class="legend-item">
-              <span class="legend-box disponible"></span>
+              <span class="legend-box available"></span>
               <span>Disponible</span>
           </div>
           <div class="legend-item">
-              <span class="legend-box reservado"></span>
+              <span class="legend-box reserved"></span>
               <span>Reservado</span>
           </div>
           <div class="legend-item">
-              <span class="legend-box mi-reserva"></span>
+              <span class="legend-box my-reservation"></span>
               <span>Mi Reserva Actual</span>
           </div>
       </div>
@@ -41,9 +41,9 @@
 
 <script>
 export default {
-  name: 'TimelineReservas',
+  name: 'TimelineReservations',
   props: {
-      reservas: {
+      reservations: {
           type: Array,
           default: () => []
       }
@@ -55,15 +55,15 @@ export default {
     }
   },
   mounted() {
-    // Importar las dependencias y luego inicializar el timeline
-    this.cargarDependencias().then(() => {
+    // Cargar dependencias e inicializar el timeline
+    this.loadDependencies().then(() => {
       this.initializeTimeline();
     }).catch(error => {
       console.error('Error al cargar las dependencias:', error);
     });
   },
   watch: {
-      reservas: {
+      reservations: {
           handler() {
               this.updateItems();
           },
@@ -71,15 +71,15 @@ export default {
       }
   },
   methods: {
-      cargarDependencias() {
+      loadDependencies() {
         return new Promise((resolve, reject) => {
-          // Verificar si ya están cargadas
+          // Verificar si ya están cargadas las dependencias
           if (window.moment && window.vis) {
             resolve();
             return;
           }
 
-          // Si no están cargadas, intentar cargar desde la carpeta public/vis
+          // Cargar desde la carpeta public/vis
           const momentScript = document.createElement('script');
           momentScript.src = '/vis/moment.min.js';
           momentScript.onload = () => {
@@ -94,23 +94,23 @@ export default {
         });
       },
       initializeTimeline() {
-          // Comprobar si las dependencias están disponibles
+          // Verificar disponibilidad de dependencias
           if (!window.moment || !window.vis || !window.vis.DataSet || !window.vis.Timeline) {
             console.error('Las dependencias necesarias no están disponibles');
             return;
           }
           
-          // Crear un DataSet
+          // Crear DataSet
           const items = new window.vis.DataSet();
           
-          // Configurar opciones del timeline con tamaño fijo sin zoom
+          // Configurar opciones del timeline
           const options = {
               stack: false,
               start: window.moment().startOf('day').add(8, 'hours').toDate(),
               end: window.moment().startOf('day').add(18, 'hours').toDate(),
               editable: false,
-              zoomable: false, // Deshabilitar zoom
-              moveable: true   // Mantener la capacidad de moverse
+              zoomable: false,
+              moveable: true
           };
           
           // Crear timeline
@@ -122,7 +122,7 @@ export default {
           
           const timeline = new window.vis.Timeline(container, items, options);
           
-          // Agregar los eventos de los botones
+          // Configurar botones de navegación
           const fitButton = document.getElementById('fit');
           if (fitButton) {
             fitButton.addEventListener('click', () => {
@@ -154,11 +154,11 @@ export default {
             });
           }
           
-          // Guardar referencias para usar más tarde
+          // Guardar referencias
           this.timeline = timeline;
           this.items = items;
           
-          // Cargar los items iniciales
+          // Cargar items iniciales
           this.updateItems();
           
           console.log('Timeline inicializado correctamente');
@@ -172,42 +172,42 @@ export default {
           // Limpiar items existentes
           this.items.clear();
           
-          // Verificar si tenemos reservas para mostrar
-          if (!this.reservas || this.reservas.length === 0) {
+          // Verificar si hay reservas para mostrar
+          if (!this.reservations || this.reservations.length === 0) {
             console.log('No hay reservas para mostrar');
             return;
           }
           
-          // Agregar las reservas
-          const reservaItems = this.reservas.map(reserva => {
+          // Agregar las reservas al timeline
+          const reservationItems = this.reservations.map(reservation => {
               let startTime, endTime;
               
-              if (reserva.start) {
-                  startTime = window.moment(reserva.start);
+              if (reservation.start) {
+                  startTime = window.moment(reservation.start);
               } else {
-                  startTime = window.moment(`${reserva.fecha} ${reserva.horaInicio}`);
+                  startTime = window.moment(`${reservation.date} ${reservation.startTime}`);
               }
               
-              if (reserva.end) {
-                  endTime = window.moment(reserva.end);
+              if (reservation.end) {
+                  endTime = window.moment(reservation.end);
               } else {
-                  endTime = window.moment(`${reserva.fecha} ${reserva.horaFin}`);
+                  endTime = window.moment(`${reservation.date} ${reservation.endTime}`);
               }
               
               return {
-                  id: reserva.id,
-                  content: reserva.content || reserva.nombre,
+                  id: reservation.id,
+                  content: reservation.content || reservation.name,
                   start: startTime.toDate(),
                   end: endTime.toDate(),
-                  // Agregar clase según el tipo de reserva (para la leyenda)
-                  className: reserva.id === 1 ? 'mi-reserva-item' : 'reservado-item'
+                  // Aplicar clase según tipo de reserva
+                  className: reservation.id === 1 ? 'my-reservation-item' : 'reserved-item'
               };
           });
           
-          this.items.add(reservaItems);
+          this.items.add(reservationItems);
           
-          // Ajustar la vista si hay items
-          if (reservaItems.length > 0) {
+          // Ajustar vista si hay items
+          if (reservationItems.length > 0) {
               this.timeline.fit();
           }
       }
@@ -216,24 +216,19 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos adicionales específicos del componente */
+/* Contenedor del timeline */
 .timeline-container {
   position: relative;
   width: 100%;
   height: 150px;
 }
 
-/* Eliminar el menú original con slider */
-.menu {
-  display: none;
-}
-
-/* Estilo para los botones laterales - MODIFICADO para ser rectangulares */
+/* Estilo para botones laterales */
 .side-button {
   position: absolute;
   top: 0;
-  height: 100%; /* Ocupa toda la altura del timeline */
-  width: 40px; /* Ancho del botón */
+  height: 100%;
+  width: 40px;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -252,7 +247,7 @@ export default {
   border-left: 1px solid #e0e0e0;
 }
 
-/* Estilo para el botón inferior */
+/* Estilo para botón inferior */
 .bottom-button {
   position: absolute;
   bottom: -40px;
@@ -261,7 +256,7 @@ export default {
   z-index: 100;
 }
 
-/* Estilo para los íconos dentro de los botones */
+/* Estilo para iconos */
 .buttons-menu {
   cursor: pointer;
   color: rgba(55, 54, 54, 0.6);
@@ -271,7 +266,7 @@ export default {
   transition: color 0.2s;
 }
 
-/* Estilo específico para el botón home que sigue siendo redondo */
+/* Estilo para botón home */
 .bottom-button .buttons-menu {
   background-color: #f5f5f5;
   padding: 8px;
@@ -316,28 +311,28 @@ export default {
   border-radius: 3px;
 }
 
-.legend-box.disponible {
+.legend-box.available {
   background-color: #f8f8f8;
   border: 1px solid #e0e0e0;
 }
 
-.legend-box.reservado {
+.legend-box.reserved {
   background-color: #fde9a8;
   border: 1px solid #f8d678;
 }
 
-.legend-box.mi-reserva {
+.legend-box.my-reservation {
   background-color: #b5f0c4;
   border: 1px solid #8de89f;
 }
 
-/* Estilos para items en el timeline */
-:deep(.mi-reserva-item) {
+/* Estilos para items del timeline */
+:deep(.my-reservation-item) {
   background-color: #b5f0c4 !important;
   border: 1px solid #8de89f !important;
 }
 
-:deep(.reservado-item) {
+:deep(.reserved-item) {
   background-color: #fde9a8 !important;
   border: 1px solid #f8d678 !important;
 }

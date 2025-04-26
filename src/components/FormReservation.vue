@@ -4,21 +4,21 @@
     <div class="form-fields">
       <div class="field">
         <label>Nombre</label>
-        <input v-model="nuevaReserva.nombre" type="text" placeholder="Nombre" />
+        <input v-model="newReservation.name" type="text" placeholder="Nombre" />
       </div>
       <div class="field">
         <label>Fecha</label>
-        <input v-model="nuevaReserva.fecha" type="date" />
+        <input v-model="newReservation.date" type="date" />
       </div>
       <div class="field">
         <label>Desde</label>
-        <input v-model="nuevaReserva.horaInicio" type="time" />
+        <input v-model="newReservation.startTime" type="time" />
       </div>
       <div class="field">
         <label>Hasta</label>
-        <input v-model="nuevaReserva.horaFin" type="time" />
+        <input v-model="newReservation.endTime" type="time" />
       </div>
-      <button @click="enviarFormulario">Guardar</button>
+      <button @click="submitForm">Guardar</button>
     </div>
   </div>
 </template>
@@ -28,27 +28,27 @@
 import { reactive } from 'vue';
 
 export default {
-  name: 'FormularioReserva',
+  name: 'FormReservation',
   props: {
-    reservas: {
+    reservations: {
       type: Array,
       required: true
     }
   },
-  emits: ['guardar-reserva'],
+  emits: ['save-reservation'],
   setup(props, { emit }) {
-    const nuevaReserva = reactive({
-      nombre: '',
-      fecha: new Date().toISOString().slice(0, 10),
-      horaInicio: '',
-      horaFin: ''
+    const newReservation = reactive({
+      name: '',
+      date: new Date().toISOString().slice(0, 10),
+      startTime: '',
+      endTime: ''
     });
 
-    function enviarFormulario() {
-      const { nombre, fecha, horaInicio, horaFin } = nuevaReserva;
+    function submitForm() {
+      const { name, date, startTime, endTime } = newReservation;
       
-      // Validaciones
-      if (!nombre || !fecha || !horaInicio || !horaFin) {
+      // Validacion de campos
+      if (!name || !date || !startTime || !endTime) {
         return alert("Completa todos los campos.");
       }
 
@@ -57,45 +57,46 @@ export default {
         return;
       }
 
-      const start = moment(`${fecha} ${horaInicio}`);
-      const end = moment(`${fecha} ${horaFin}`);
+      const start = moment(`${date} ${startTime}`);
+      const end = moment(`${date} ${endTime}`);
       
+      // Validacion de horarios
       if (!start.isBefore(end)) {
         return alert('"Desde" debe ser menor que "Hasta".');
       }
 
-      // Comprobar solapamiento con otras reservas
-      const haySolapamiento = props.reservas.some(r => {
-        const reservaStart = r.start ? moment(r.start) : moment(`${r.fecha} ${r.horaInicio}`);
-        const reservaEnd = r.end ? moment(r.end) : moment(`${r.fecha} ${r.horaFin}`);
-        return reservaStart.isBefore(end) && reservaEnd.isAfter(start);
+      // Verificar conflictos con otras reservas
+      const hasOverlap = props.reservations.some(r => {
+        const reservationStart = r.start ? moment(r.start) : moment(`${r.date} ${r.startTime}`);
+        const reservationEnd = r.end ? moment(r.end) : moment(`${r.date} ${r.endTime}`);
+        return reservationStart.isBefore(end) && reservationEnd.isAfter(start);
       });
       
-      if (haySolapamiento) {
+      if (hasOverlap) {
         return alert("Ya hay una reserva en ese horario.");
       }
 
-      // Crear objeto de reserva para emitir
-      emit('guardar-reserva', {
-        nombre: nuevaReserva.nombre,
-        content: nuevaReserva.nombre, // Para compatibilidad con timeline
-        fecha: nuevaReserva.fecha,
-        horaInicio: nuevaReserva.horaInicio,
-        horaFin: nuevaReserva.horaFin,
-        start: `${nuevaReserva.fecha} ${nuevaReserva.horaInicio}`, // Para compatibilidad con timeline
-        end: `${nuevaReserva.fecha} ${nuevaReserva.horaFin}` // Para compatibilidad con timeline
+      // Crear objeto de reserva y emitirlo
+      emit('save-reservation', {
+        name: newReservation.name,
+        content: newReservation.name, 
+        date: newReservation.date,
+        startTime: newReservation.startTime,
+        endTime: newReservation.endTime,
+        start: `${newReservation.date} ${newReservation.startTime}`, 
+        end: `${newReservation.date} ${newReservation.endTime}`
       });
       
       // Limpiar formulario
-      nuevaReserva.nombre = '';
-      nuevaReserva.fecha = new Date().toISOString().slice(0, 10);
-      nuevaReserva.horaInicio = '';
-      nuevaReserva.horaFin = '';
+      newReservation.name = '';
+      newReservation.date = new Date().toISOString().slice(0, 10);
+      newReservation.startTime = '';
+      newReservation.endTime = '';
     }
 
     return {
-      nuevaReserva,
-      enviarFormulario
+      newReservation,
+      submitForm
     };
   }
 };
