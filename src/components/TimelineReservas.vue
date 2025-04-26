@@ -18,37 +18,28 @@
       </div>
       
       <div class="timeline-container">
-          <!-- Botón izquierdo
-          <div class="side-button left">
-              <i class="material-icons dp48 buttons-menu" id="moveLeft">arrow_back</i>
-          </div> -->
-          
           <!-- Timeline -->
           <div id="visualization">
-
+            <!-- Botón izquierdo -->
             <div class="side-button left">
               <i class="material-icons dp48 buttons-menu" id="moveLeft">arrow_back</i>
-          </div>
-          <!-- Botón derecho -->
-          <div class="side-button right">
+            </div>
+            
+            <!-- Botón derecho -->
+            <div class="side-button right">
               <i class="material-icons dp48 buttons-menu" id="moveRight">arrow_forward</i>
-          </div>
-          
-          <!-- Botón home centrado abajo -->
-          <div class="bottom-button">
+            </div>
+            
+            <!-- Botón home centrado abajo -->
+            <div class="bottom-button">
               <i class="material-icons dp48 buttons-menu" id="fit">home</i>
+            </div>
           </div>
-          </div>
-          
-          
       </div>
   </div>
 </template>
 
 <script>
-import moment from "../assets/vis/moment.js";
-import { Timeline, DataSet } from "../assets/vis/vis.js";
-
 export default {
   name: 'TimelineReservas',
   props: {
@@ -57,36 +48,19 @@ export default {
           default: () => []
       }
   },
+  data() {
+    return {
+      timeline: null,
+      items: null
+    }
+  },
   mounted() {
-      // Cargar los íconos de Material Design
-      if (!document.getElementById('material-icons-css')) {
-          const link = document.createElement('link');
-          link.id = 'material-icons-css';
-          link.rel = 'stylesheet';
-          link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
-          document.head.appendChild(link);
-      }
-
-      // Cargar los estilos CSS necesarios
-      if (!document.getElementById('style-css')) {
-          const link = document.createElement('link');
-          link.id = 'style-css';
-          link.rel = 'stylesheet';
-          link.type = 'text/css';
-          link.href = '../assets/vis/style.css';
-          document.head.appendChild(link);
-      }
-
-      if (!document.getElementById('full-style-css')) {
-          const link = document.createElement('link');
-          link.id = 'full-style-css';
-          link.rel = 'stylesheet';
-          link.type = 'text/css';
-          link.href = '../assets/vis/full-style.css';
-          document.head.appendChild(link);
-      }
-
+    // Importar las dependencias y luego inicializar el timeline
+    this.cargarDependencias().then(() => {
       this.initializeTimeline();
+    }).catch(error => {
+      console.error('Error al cargar las dependencias:', error);
+    });
   },
   watch: {
       reservas: {
@@ -97,15 +71,43 @@ export default {
       }
   },
   methods: {
+      cargarDependencias() {
+        return new Promise((resolve, reject) => {
+          // Verificar si ya están cargadas
+          if (window.moment && window.vis) {
+            resolve();
+            return;
+          }
+
+          // Si no están cargadas, intentar cargar desde la carpeta public/vis
+          const momentScript = document.createElement('script');
+          momentScript.src = '/vis/moment.min.js';
+          momentScript.onload = () => {
+            const visScript = document.createElement('script');
+            visScript.src = '/vis/vis-timeline-graph2d.min.js';
+            visScript.onload = resolve;
+            visScript.onerror = reject;
+            document.head.appendChild(visScript);
+          };
+          momentScript.onerror = reject;
+          document.head.appendChild(momentScript);
+        });
+      },
       initializeTimeline() {
-          // Create a DataSet
-          const items = new DataSet();
+          // Comprobar si las dependencias están disponibles
+          if (!window.moment || !window.vis || !window.vis.DataSet || !window.vis.Timeline) {
+            console.error('Las dependencias necesarias no están disponibles');
+            return;
+          }
+          
+          // Crear un DataSet
+          const items = new window.vis.DataSet();
           
           // Configurar opciones del timeline con tamaño fijo sin zoom
           const options = {
               stack: false,
-              start: moment().startOf('day').add(8, 'hours').toDate(),
-              end: moment().startOf('day').add(18, 'hours').toDate(),
+              start: window.moment().startOf('day').add(8, 'hours').toDate(),
+              end: window.moment().startOf('day').add(18, 'hours').toDate(),
               editable: false,
               zoomable: false, // Deshabilitar zoom
               moveable: true   // Mantener la capacidad de moverse
@@ -113,30 +115,44 @@ export default {
           
           // Crear timeline
           const container = document.getElementById('visualization');
-          const timeline = new Timeline(container, items, options);
+          if (!container) {
+            console.error('No se encontró el contenedor del timeline');
+            return;
+          }
+          
+          const timeline = new window.vis.Timeline(container, items, options);
           
           // Agregar los eventos de los botones
-          document.getElementById('fit').addEventListener('click', () => {
+          const fitButton = document.getElementById('fit');
+          if (fitButton) {
+            fitButton.addEventListener('click', () => {
               timeline.fit();
-          });
+            });
+          }
           
-          document.getElementById('moveLeft').addEventListener('click', () => {
+          const moveLeftButton = document.getElementById('moveLeft');
+          if (moveLeftButton) {
+            moveLeftButton.addEventListener('click', () => {
               const range = timeline.getWindow();
               const interval = range.end - range.start;
               timeline.setWindow({
                   start: new Date(range.start.valueOf() - interval * 0.2),
                   end: new Date(range.end.valueOf() - interval * 0.2)
               });
-          });
+            });
+          }
           
-          document.getElementById('moveRight').addEventListener('click', () => {
+          const moveRightButton = document.getElementById('moveRight');
+          if (moveRightButton) {
+            moveRightButton.addEventListener('click', () => {
               const range = timeline.getWindow();
               const interval = range.end - range.start;
               timeline.setWindow({
                   start: new Date(range.start.valueOf() + interval * 0.2),
                   end: new Date(range.end.valueOf() + interval * 0.2)
               });
-          });
+            });
+          }
           
           // Guardar referencias para usar más tarde
           this.timeline = timeline;
@@ -144,27 +160,38 @@ export default {
           
           // Cargar los items iniciales
           this.updateItems();
+          
+          console.log('Timeline inicializado correctamente');
       },
       updateItems() {
-          if (!this.items || !this.timeline) return;
+          if (!this.items || !this.timeline) {
+            console.warn('Timeline o items no inicializados');
+            return;
+          }
           
           // Limpiar items existentes
           this.items.clear();
+          
+          // Verificar si tenemos reservas para mostrar
+          if (!this.reservas || this.reservas.length === 0) {
+            console.log('No hay reservas para mostrar');
+            return;
+          }
           
           // Agregar las reservas
           const reservaItems = this.reservas.map(reserva => {
               let startTime, endTime;
               
               if (reserva.start) {
-                  startTime = moment(reserva.start);
+                  startTime = window.moment(reserva.start);
               } else {
-                  startTime = moment(`${reserva.fecha} ${reserva.horaInicio}`);
+                  startTime = window.moment(`${reserva.fecha} ${reserva.horaInicio}`);
               }
               
               if (reserva.end) {
-                  endTime = moment(reserva.end);
+                  endTime = window.moment(reserva.end);
               } else {
-                  endTime = moment(`${reserva.fecha} ${reserva.horaFin}`);
+                  endTime = window.moment(`${reserva.fecha} ${reserva.horaFin}`);
               }
               
               return {
@@ -189,34 +216,40 @@ export default {
 </script>
 
 <style scoped>
-/* Los estilos se cargan desde los archivos CSS externos */
-/* Añadir estilos adicionales específicos del componente */
+/* Estilos adicionales específicos del componente */
 .timeline-container {
   position: relative;
   width: 100%;
   height: 150px;
 }
 
-
 /* Eliminar el menú original con slider */
 .menu {
   display: none;
 }
 
-/* Estilo para los botones laterales */
+/* Estilo para los botones laterales - MODIFICADO para ser rectangulares */
 .side-button {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  height: 100%; /* Ocupa toda la altura del timeline */
+  width: 40px; /* Ancho del botón */
   z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .side-button.left {
-  left: 5px;
+  left: 0;
+  background-color: rgba(245, 245, 245, 0.7);
+  border-right: 1px solid #e0e0e0;
 }
 
 .side-button.right {
-  right: 5px;
+  right: 0;
+  background-color: rgba(245, 245, 245, 0.7);
+  border-left: 1px solid #e0e0e0;
 }
 
 /* Estilo para el botón inferior */
@@ -228,23 +261,32 @@ export default {
   z-index: 100;
 }
 
+/* Estilo para los íconos dentro de los botones */
 .buttons-menu {
   cursor: pointer;
+  color: rgba(55, 54, 54, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+/* Estilo específico para el botón home que sigue siendo redondo */
+.bottom-button .buttons-menu {
   background-color: #f5f5f5;
   padding: 8px;
   border-radius: 50%;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
 }
 
 .buttons-menu:hover {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.bottom-button .buttons-menu:hover {
   background-color: #e0e0e0;
 }
 
-/* Estilos para la leyenda */
 .timeline-title {
   margin-bottom: 10px;
   color: #555;

@@ -26,9 +26,7 @@
 </template>
 
 <script>
-import { onMounted } from "vue";
-import moment from "../assets/vis/moment.js";
-
+/* global moment*/
 export default {
   name: "TablaReservas",
   props: {
@@ -39,16 +37,6 @@ export default {
   },
   emits: ["eliminar-reserva"],
   setup(props, { emit }) {
-    onMounted(() => {
-      if (!document.getElementById("fontawesome-css")) {
-        const link = document.createElement("link");
-        link.id = "fontawesome-css";
-        link.rel = "stylesheet";
-        link.href =
-          "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css";
-        document.head.appendChild(link);
-      }
-    });
 
     function formatoHorario(date) {
       return moment(date).locale("es").format("HH:mm");

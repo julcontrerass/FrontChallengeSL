@@ -15,11 +15,12 @@
 </template>
 
 <script setup>
+/* global moment */
 import { ref } from 'vue';
 import FormularioReserva from "./FormularioReserva.vue";
 import TimelineReservas from "./TimelineReservas.vue";
 import TablaReservas from "./TablaReservas.vue";
-import moment from "../assets/vis/moment";
+
 
 const nextId = ref(2);
 const reservas = ref([

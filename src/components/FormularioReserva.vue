@@ -24,8 +24,8 @@
 </template>
 
 <script>
+/* global moment */
 import { reactive } from 'vue';
-import moment from '../assets/vis/moment.js';
 
 export default {
   name: 'FormularioReserva',
