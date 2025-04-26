@@ -1,4 +1,4 @@
-# timeline-front
+# Timeline-front
 
 ## Project setup
 ```
@@ -10,15 +10,14 @@ npm install
 npm run serve
 ```
 
-### Compiles and minifies for production
-```
-npm run build
-```
+El objetivo de este challenge es desarrollar la interfaz que se adjunta en png con funcionalidades que permitan agregar y remover reservas del timeline.
+Se adjunta la componente timeline a utilizar. Esto es para que se enfoque en componentizar, dejar el Vue listo.
 
-### Lints and fixes files
-```
-npm run lint
-```
+El desarrollo se debe realizar en Vue. Acá podés modificar a gusto.
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+Fundamentalmente se evaluará:
+
+1 - Funcionamiento del componente.
+2 - Aplicación a componente de Vue.
+3 - Fidelidad del Look and feel (css y html) de la interfaz componente.
+
